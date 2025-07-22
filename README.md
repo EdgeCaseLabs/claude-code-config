@@ -163,6 +163,28 @@ Tool permissions are defined in `src/settings.json`:
 - [uv](https://github.com/astral-sh/uv) (Python package manager)
 - Bash (for setup script)
 
+### Optional: ElevenLabs Text-to-Speech Setup
+
+If you want to use the ElevenLabs TTS functionality in the hooks, you'll need to set up the following environment variables:
+
+1. Add the environment variables to your shell profile:
+   ```bash
+   echo 'export ELEVENLABS_API_KEY="your_api_key_here"' >> ~/.bash_profile
+   echo 'export ELEVENLABS_VOICE_ID="your_voice_id_here"' >> ~/.bash_profile
+   ```
+
+2. Reload your shell profile:
+   ```bash
+   source ~/.bash_profile
+   ```
+
+3. Get your API key from [ElevenLabs](https://elevenlabs.io/) after creating an account
+4. Find available voice IDs in your ElevenLabs dashboard or use their API to list voices
+
+Note: If you're using zsh (default on newer macOS), use `~/.zshrc` instead of `~/.bash_profile`.
+
+The TTS hooks will work without these variables set, but will display an error message with setup instructions if you try to use them.
+
 ### Testing Changes
 
 ```bash
