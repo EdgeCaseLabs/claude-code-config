@@ -6,9 +6,12 @@ A centralized configuration management system for [Claude Code](https://claude.a
 
 This repository maintains a single source of truth for Claude Code configurations that can be shared across all projects. Instead of managing separate configurations in each project, this system creates symlinks from `~/.claude/` to this repository, ensuring consistent behavior everywhere.
 
+> **NOTE:** These are my personal Claude Code settings. You will probably want to customize them for your own use. Read the settings.json file!!
+
 ## Features
 
 - **Global Configuration**: Single `src/settings.json` file with comprehensive tool permissions
+- **Global User Memory**: `src/CLAUDE.md` for personal preferences that apply across all Claude Code sessions
 - **Advanced Hook System**: Complete lifecycle management with Python-based hooks
 - **Automated Setup**: Idempotent setup script with safety features
 - **Centralized Management**: All changes apply immediately to all projects
@@ -42,6 +45,7 @@ claude-code-config/
 ├── setup.sh               # Setup script for symlink management
 └── src/                   # Source directory
     ├── settings.json      # Main Claude Code configuration
+    ├── CLAUDE.md          # Global user preferences (symlinked to ~/.claude/CLAUDE.md)
     └── hooks/             # Hook system directory
         ├── hook_logger.py     # Logging utilities
         ├── notification.py    # Notification system
@@ -112,14 +116,21 @@ The `setup.sh` script provides flexible setup options:
 |--------|--------|---------|
 | `~/.claude/settings.json` | `./src/settings.json` | Main configuration |
 | `~/.claude/hooks/` | `./src/hooks/` | Hook system |
+| `~/.claude/CLAUDE.md` | `./src/CLAUDE.md` | Global user preferences |
 
 ## Usage
 
 ### Making Configuration Changes
 
-1. Edit `settings.user.json` in this repository
+1. Edit `src/settings.json` in this repository
 2. Changes apply immediately to all Claude Code sessions
 3. No restart or re-setup required
+
+### Editing Global User Preferences
+
+1. Edit `src/CLAUDE.md` in this repository
+2. This file contains your personal preferences that apply across all Claude Code sessions
+3. Changes are immediate - no restart needed
 
 ### Adding New Hooks
 
@@ -207,12 +218,18 @@ chmod +x setup.sh
 ./setup.sh --force
 ```
 
+**Debug Mode**: Put Claude Code into debug mode to observe more details
+```bash
+claude --debug
+```
+
 ### Verification Commands
 
 ```bash
 # Check symlink targets
 readlink ~/.claude/settings.json
 readlink ~/.claude/hooks
+readlink ~/.claude/CLAUDE.md
 
 # Test hook accessibility  
 ls -la ~/.claude/hooks/
@@ -229,20 +246,6 @@ python -m json.tool ~/.claude/settings.json
 - **Idempotent Setup**: Safe to run multiple times
 - **Rollback Support**: Backups can be restored if needed
 
-## Contributing
-
-1. Make changes to configuration files
-2. Test with `./setup.sh --dry-run`
-3. Apply with `./setup.sh`
-4. Validate hooks work correctly
-5. Commit and push changes
-
-## Support
-
-For issues or questions:
-- Check the troubleshooting section above
-- Review hook logs in `src/hooks/logs/`
-- Examine backup configurations in `~/.claude/backup-*/`
 
 ---
 

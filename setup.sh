@@ -10,6 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
 SETTINGS_TARGET="$SCRIPT_DIR/src/settings.json"
 HOOKS_TARGET="$SCRIPT_DIR/src/hooks"
+CLAUDE_MD_TARGET="$SCRIPT_DIR/src/CLAUDE.md"
 
 
 # Colors for output
@@ -53,6 +54,7 @@ OPTIONS:
 This script creates symlinks from ~/.claude/ to this repository's configuration files:
 - ~/.claude/settings.json -> ./src/settings.json
 - ~/.claude/hooks/ -> ./src/hooks/
+- ~/.claude/CLAUDE.md -> ./src/CLAUDE.md
 
 Use --remove to uninstall (remove symlinks).
 Use --force to overwrite existing files/directories (WARNING: destructive).
@@ -127,6 +129,11 @@ validate_targets() {
     
     if [[ ! -d "$HOOKS_TARGET" ]]; then
         log_error "Hooks directory not found: $HOOKS_TARGET"
+        return 1
+    fi
+    
+    if [[ ! -f "$CLAUDE_MD_TARGET" ]]; then
+        log_error "CLAUDE.md file not found: $CLAUDE_MD_TARGET"
         return 1
     fi
     
@@ -208,6 +215,9 @@ remove_configuration() {
     # Remove hooks directory symlink
     remove_symlink "$CLAUDE_DIR/hooks" "hooks directory"
     
+    # Remove CLAUDE.md symlink
+    remove_symlink "$CLAUDE_DIR/CLAUDE.md" "CLAUDE.md"
+    
     if [[ "$DRY_RUN" == false ]]; then
         log_success "Configuration symlinks removed successfully"
     else
@@ -233,6 +243,9 @@ setup_configuration() {
     # Create hooks directory symlink
     create_symlink "$HOOKS_TARGET" "$CLAUDE_DIR/hooks" "hooks directory"
     
+    # Create CLAUDE.md symlink
+    create_symlink "$CLAUDE_MD_TARGET" "$CLAUDE_DIR/CLAUDE.md" "CLAUDE.md"
+    
     # Verify symlinks
     if [[ "$DRY_RUN" == false ]]; then
         log_info "Verifying symlink integrity..."
@@ -251,6 +264,13 @@ setup_configuration() {
             exit 1
         fi
         
+        if [[ -L "$CLAUDE_DIR/CLAUDE.md" ]] && [[ -f "$CLAUDE_DIR/CLAUDE.md" ]]; then
+            log_success "CLAUDE.md symlink is working correctly"
+        else
+            log_error "CLAUDE.md symlink verification failed"
+            exit 1
+        fi
+        
         log_success "All symlinks verified successfully"
         
         # Display final status
@@ -258,6 +278,7 @@ setup_configuration() {
         log_info "Configuration setup complete!"
         log_info "Settings: $CLAUDE_DIR/settings.json -> $SETTINGS_TARGET"
         log_info "Hooks: $CLAUDE_DIR/hooks -> $HOOKS_TARGET"
+        log_info "User Memory: $CLAUDE_DIR/CLAUDE.md -> $CLAUDE_MD_TARGET"
         
 
     else
