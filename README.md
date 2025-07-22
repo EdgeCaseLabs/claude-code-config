@@ -247,3 +247,7 @@ For issues or questions:
 ---
 
 **Note**: Changes to this repository immediately affect all Claude Code sessions. Test carefully before committing changes.
+
+---
+
+_Inspired by https://github.com/disler/claude-code-hooks-mastery/_
