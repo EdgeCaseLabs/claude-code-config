@@ -6,7 +6,17 @@ A centralized configuration management system for [Claude Code](https://claude.a
 
 This repository maintains a single source of truth for Claude Code configurations that can be shared across all projects. Instead of managing separate configurations in each project, this system creates symlinks from `~/.claude/` to this repository, ensuring consistent behavior everywhere.
 
-> **NOTE:** These are my personal Claude Code settings. You will probably want to customize them for your own use. Read the settings.json file!!
+> [!WARNING]
+> **⚠️ IMPORTANT: Personal Configuration Alert ⚠️**
+> 
+> These are **MY PERSONAL** Claude Code settings. You will **DEFINITELY** want to customize them for your own use!
+> 
+> **Before using this repository:**
+> 1. **READ** the `src/settings.json` file carefully
+> 2. **REVIEW** all hook scripts in `src/hooks/`
+> 3. **MODIFY** settings to match your preferences and security requirements
+> 
+> Using these settings as-is may not align with your workflow or security needs.
 
 ## Features
 
