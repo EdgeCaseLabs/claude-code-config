@@ -1,0 +1,11 @@
+.DS_Store
+
+node_modules
+__pycache__
+*.pyc
+**/settings.local.json
+*.log
+logs/
+
+output/
+dist/
