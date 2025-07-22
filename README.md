@@ -25,7 +25,6 @@ This repository maintains a single source of truth for Claude Code configuration
 - **Advanced Hook System**: Complete lifecycle management with Python-based hooks
 - **Automated Setup**: Idempotent setup script with safety features
 - **Centralized Management**: All changes apply immediately to all projects
-- **Backup Protection**: Automatic backup of existing configurations
 
 ## Quick Start
 
@@ -81,15 +80,37 @@ The main configuration file includes:
 
 ### Hook System
 
-The hook system provides comprehensive lifecycle management:
+One of the primary features of this hook system is **real-time notifications** - you'll receive audio and system notifications when Claude Code needs your input, when agents complete tasks, or when important events occur. This allows you to multitask effectively while Claude Code works in the background.
 
-| Hook | Purpose | Trigger |
-|------|---------|---------|
-| `PreToolUse` | Pre-execution logging and validation | Before any tool use |
-| `PostToolUse` | Post-execution processing and logging | After tool completion |
-| `Notification` | System notifications and alerts | On significant events |
-| `Stop` | Session cleanup and transcript management | Session termination |
-| `SubagentStop` | Subagent lifecycle management | Subagent termination |
+#### Hook Descriptions
+
+| Hook | Purpose | What It Does |
+|------|---------|--------------|
+| `PreToolUse` | Pre-execution validation and safety | • Logs all tool executions to JSON files<br>• Blocks dangerous commands (e.g., `rm -rf /`)<br>• Validates inputs before execution<br>• Provides audit trail of all actions |
+| `PostToolUse` | Post-execution processing | • Logs tool results and outputs<br>• Tracks execution times<br>• Records success/failure states<br>• Maintains detailed activity logs |
+| `Notification` | Audio and system alerts | • Plays audio notifications for key events<br>• Shows macOS system notifications<br>• Alerts when user input is needed<br>• Notifies on task completion<br>• Uses ElevenLabs TTS for voice alerts |
+| `Stop` | Session cleanup and archival | • Archives chat transcripts<br>• Performs session cleanup<br>• Saves conversation history<br>• Notifies when session ends |
+| `SubagentStop` | Subagent lifecycle management | • Tracks subagent completion<br>• Logs subagent results<br>• Manages nested agent states<br>• Provides completion notifications |
+
+#### Audio Notifications Setup (Optional)
+
+The notification hooks support ElevenLabs text-to-speech for audio alerts when Claude Code needs your attention:
+
+1. Get your API key from [ElevenLabs](https://elevenlabs.io/) after creating an account
+2. Find available voice IDs in your ElevenLabs dashboard or use their API to list voices
+3. Add the environment variables to your shell profile:
+   ```bash
+   echo 'export ELEVENLABS_API_KEY="your_api_key_here"' >> ~/.bash_profile
+   echo 'export ELEVENLABS_VOICE_ID="your_voice_id_here"' >> ~/.bash_profile
+   ```
+
+4. Reload your shell profile:
+   ```bash
+   source ~/.bash_profile
+   ```
+
+
+**Note**: If you're using zsh (default on newer macOS), use `~/.zshrc` instead of `~/.bash_profile`. The hooks will still function without these variables but will show setup instructions instead of playing audio.
 
 ## Setup Script Usage
 
@@ -172,28 +193,6 @@ Tool permissions are defined in `src/settings.json`:
 - Python 3.8+ (for hooks)
 - [uv](https://github.com/astral-sh/uv) (Python package manager)
 - Bash (for setup script)
-
-### Optional: ElevenLabs Text-to-Speech Setup
-
-If you want to use the ElevenLabs TTS functionality in the hooks, you'll need to set up the following environment variables:
-
-1. Add the environment variables to your shell profile:
-   ```bash
-   echo 'export ELEVENLABS_API_KEY="your_api_key_here"' >> ~/.bash_profile
-   echo 'export ELEVENLABS_VOICE_ID="your_voice_id_here"' >> ~/.bash_profile
-   ```
-
-2. Reload your shell profile:
-   ```bash
-   source ~/.bash_profile
-   ```
-
-3. Get your API key from [ElevenLabs](https://elevenlabs.io/) after creating an account
-4. Find available voice IDs in your ElevenLabs dashboard or use their API to list voices
-
-Note: If you're using zsh (default on newer macOS), use `~/.zshrc` instead of `~/.bash_profile`.
-
-The TTS hooks will work without these variables set, but will display an error message with setup instructions if you try to use them.
 
 ### Testing Changes
 
