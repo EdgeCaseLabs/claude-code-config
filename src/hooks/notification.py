@@ -68,12 +68,17 @@ def announce_notification():
             notification_message = "Your agent needs your input"
         
         # Call the TTS script with the notification message
-        subprocess.run([
+        out = subprocess.run([
             "uv", "run", tts_script, notification_message
         ], 
         capture_output=True,  # Suppress output
         timeout=10  # 10-second timeout
         )
+        if out.returncode != 0:
+            print(f"TTS script failed with return code: {out.returncode}")
+            print(f"Output: {out.stdout}")
+            print(f"Error: {out.stderr}")
+            sys.exit(1)
         
     except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError) as e:
         # Fail silently if TTS encounters issues
@@ -92,6 +97,7 @@ def main():
         # Parse command line arguments
         parser = argparse.ArgumentParser()
         parser.add_argument('--notify', action='store_true', help='Enable TTS notifications')
+        parser.add_argument('--skip-generic-message', action='store_true', help='Skip the generic "Claude is waiting for your input" message')
         args = parser.parse_args()
         
         # Read JSON input from stdin
@@ -122,7 +128,7 @@ def main():
         
         # Announce notification via TTS only if --notify flag is set
         # Skip TTS for the generic "Claude is waiting for your input" message
-        if args.notify and input_data.get('message') != 'Claude is waiting for your input':
+        if args.notify and (input_data.get('message') != 'Claude is waiting for your input' or not args.skip_generic_message):
             announce_notification()
         
         sys.exit(0)
