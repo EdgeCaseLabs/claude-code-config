@@ -24,6 +24,7 @@ This file contains global user preferences that apply to all Claude Code session
 - Search thoroughly before implementing changes
 - Test changes when possible
 - Run linting and type checking when available
+- Don't commit and push right away. I want to review things first.
 
 ## Tool Usage
 
