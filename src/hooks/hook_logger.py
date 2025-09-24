@@ -13,7 +13,8 @@ def setup_hook_logger(hook_name):
     Returns:
         A configured logger instance
     """
-    log_dir = os.path.dirname(os.path.abspath(__file__))
+    log_dir = os.path.expanduser('~/.claude/hooks/logs')
+    os.makedirs(log_dir, exist_ok=True)
     log_file = os.path.join(log_dir, 'hook-errors.log')
     
     # Create a logger specific to this hook

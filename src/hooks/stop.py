@@ -156,7 +156,7 @@ def main():
         stop_hook_active = input_data.get("stop_hook_active", False)
 
         # Ensure log directory exists
-        log_dir = os.path.join(os.getcwd(), "logs")
+        log_dir = os.path.expanduser("~/.claude/hooks/logs")
         os.makedirs(log_dir, exist_ok=True)
         log_path = os.path.join(log_dir, "stop.json")
 

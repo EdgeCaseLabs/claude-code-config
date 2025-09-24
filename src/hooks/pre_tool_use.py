@@ -108,12 +108,12 @@ def main():
                 sys.exit(2)  # Exit code 2 blocks tool call and shows error to Claude
         
         # Ensure log directory exists
-        log_dir = Path.cwd() / 'logs'
-        log_dir.mkdir(parents=True, exist_ok=True)
-        log_path = log_dir / 'pre_tool_use.json'
+        log_dir = os.path.expanduser('~/.claude/hooks/logs')
+        os.makedirs(log_dir, exist_ok=True)
+        log_path = os.path.join(log_dir, 'pre_tool_use.json')
         
         # Read existing log data or initialize empty list
-        if log_path.exists():
+        if os.path.exists(log_path):
             with open(log_path, 'r') as f:
                 try:
                     log_data = json.load(f)
