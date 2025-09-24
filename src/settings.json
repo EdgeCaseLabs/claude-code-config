@@ -12,7 +12,10 @@
       "Write",
       "Edit",
       "Bash(chmod:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(rm -f ~/.claude/hooks/.quiet)",
+      "Bash(touch ~/.claude/hooks/.quiet)",
+      "Edit(~/.claude/hooks/.quiet)"
     ],
     "deny": []
   },

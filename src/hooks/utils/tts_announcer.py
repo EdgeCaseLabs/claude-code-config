@@ -122,6 +122,17 @@ def generate_notification_message(include_name=False):
         return "Your agent needs your input"
 
 
+def is_quiet_mode():
+    """
+    Check if quiet mode is enabled by looking for the .quiet file.
+
+    Returns:
+        bool: True if quiet mode is enabled, False otherwise
+    """
+    quiet_file = os.path.expanduser('~/.claude/hooks/.quiet')
+    return os.path.exists(quiet_file)
+
+
 def announce(message_type="custom", custom_message=None, use_llm=False, include_name=False):
     """
     Unified TTS announcement function.
@@ -135,6 +146,10 @@ def announce(message_type="custom", custom_message=None, use_llm=False, include_
     logger = setup_hook_logger('tts_announcer')
 
     try:
+        # Check if quiet mode is enabled
+        if is_quiet_mode():
+            return  # Skip TTS when quiet mode is active
+
         tts_script = get_tts_script_path()
         if not tts_script:
             return  # No TTS scripts available
