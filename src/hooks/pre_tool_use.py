@@ -11,12 +11,12 @@ from hook_logger import setup_hook_logger, log_exception
 
 def is_dangerous_rm_command(command):
     """
-    Comprehensive detection of dangerous rm commands.
-    Matches various forms of rm -rf and similar destructive patterns.
+    Comprehensive detection of dangerous rm commands and other destructive operations.
+    Matches various forms of rm -rf, docker system prune, and similar destructive patterns.
     """
     # Normalize command by removing extra spaces and converting to lowercase
     normalized = ' '.join(command.lower().split())
-    
+
     # Pattern 1: Standard rm -rf variations
     patterns = [
         r'\brm\s+.*-[a-z]*r[a-z]*f',  # rm -rf, rm -fr, rm -Rf, etc.
@@ -25,6 +25,7 @@ def is_dangerous_rm_command(command):
         r'\brm\s+--force\s+--recursive',  # rm --force --recursive
         r'\brm\s+-r\s+.*-f',  # rm -r ... -f
         r'\brm\s+-f\s+.*-r',  # rm -f ... -r
+        r'\bdocker\s+system\s+prune',  # docker system prune
     ]
     
     # Check for dangerous patterns
