@@ -11,6 +11,8 @@ This repository manages centralized Claude Code configurations and hooks that ar
 - **Configuration Distribution**: Uses symlinks from this repo to `~/.claude/` to share settings globally
 - **Primary Config**: `src/settings.json` contains the main Claude Code configuration with tool permissions and hook definitions
 - **Global User Memory**: `src/CLAUDE.md` provides user preferences that apply across all Claude Code sessions
+- **Custom Commands**: `src/commands/` contains slash command definitions shared globally
+- **Custom Agents**: `src/agents/` contains agent definitions for specialized tasks
 - **Hook System**: Python-based hooks in `src/hooks/` handle various lifecycle events
 - **Setup Automation**: `setup.sh` script handles symlink creation with multiple modes and safety features
 
@@ -22,6 +24,8 @@ claude-code-config/
 ├── src/
 │   ├── settings.json       # Claude Code configuration file
 │   ├── CLAUDE.md          # Global user preferences (symlinked to ~/.claude/CLAUDE.md)
+│   ├── commands/           # Custom slash commands
+│   ├── agents/             # Custom agent definitions
 │   └── hooks/              # Python hook implementations
 │       ├── pre_tool_use.py     # Pre-execution validation and safety checks
 │       ├── post_tool_use.py    # Post-execution processing
@@ -42,6 +46,8 @@ The setup workflow:
    - `~/.claude/settings.json` → `./src/settings.json`
    - `~/.claude/hooks/` → `./src/hooks/`
    - `~/.claude/CLAUDE.md` → `./src/CLAUDE.md`
+   - `~/.claude/commands/` → `./src/commands/`
+   - `~/.claude/agents/` → `./src/agents/`
 2. Optional flags:
    - `--dry-run`: Preview changes without executing
    - `--force`: Overwrite existing symlinks
@@ -65,6 +71,7 @@ This is a configuration management repository. When working here:
 - Test configuration changes carefully as they apply globally
 - The setup script is idempotent and handles existing symlinks gracefully
 - Hook modifications take effect immediately for all Claude Code sessions
+- New commands in `src/commands/` and agents in `src/agents/` are available globally after setup
 - Logs in the `logs/` directory track hook execution for debugging
 
 ## Safety Features

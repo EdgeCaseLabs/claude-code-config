@@ -12,6 +12,7 @@ SETTINGS_TARGET="$SCRIPT_DIR/src/settings.json"
 HOOKS_TARGET="$SCRIPT_DIR/src/hooks"
 CLAUDE_MD_TARGET="$SCRIPT_DIR/src/CLAUDE.md"
 COMMANDS_TARGET="$SCRIPT_DIR/src/commands"
+AGENTS_TARGET="$SCRIPT_DIR/src/agents"
 
 
 # Colors for output
@@ -57,6 +58,7 @@ This script creates symlinks from ~/.claude/ to this repository's configuration 
 - ~/.claude/hooks/ -> ./src/hooks/
 - ~/.claude/CLAUDE.md -> ./src/CLAUDE.md
 - ~/.claude/commands/ -> ./src/commands/
+- ~/.claude/agents/ -> ./src/agents/
 
 Use --remove to uninstall (remove symlinks).
 Use --force to overwrite existing files/directories (WARNING: destructive).
@@ -143,7 +145,12 @@ validate_targets() {
         log_error "Commands directory not found: $COMMANDS_TARGET"
         return 1
     fi
-    
+
+    if [[ ! -d "$AGENTS_TARGET" ]]; then
+        log_error "Agents directory not found: $AGENTS_TARGET"
+        return 1
+    fi
+
     log_success "Configuration targets validated"
     return 0
 }
@@ -227,7 +234,10 @@ remove_configuration() {
     
     # Remove commands directory symlink
     remove_symlink "$CLAUDE_DIR/commands" "commands directory"
-    
+
+    # Remove agents directory symlink
+    remove_symlink "$CLAUDE_DIR/agents" "agents directory"
+
     if [[ "$DRY_RUN" == false ]]; then
         log_success "Configuration symlinks removed successfully"
     else
@@ -258,7 +268,10 @@ setup_configuration() {
     
     # Create commands directory symlink
     create_symlink "$COMMANDS_TARGET" "$CLAUDE_DIR/commands" "commands directory"
-    
+
+    # Create agents directory symlink
+    create_symlink "$AGENTS_TARGET" "$CLAUDE_DIR/agents" "agents directory"
+
     # Verify symlinks
     if [[ "$DRY_RUN" == false ]]; then
         log_info "Verifying symlink integrity..."
@@ -290,7 +303,14 @@ setup_configuration() {
             log_error "Commands symlink verification failed"
             exit 1
         fi
-        
+
+        if [[ -L "$CLAUDE_DIR/agents" ]] && [[ -d "$CLAUDE_DIR/agents" ]]; then
+            log_success "Agents symlink is working correctly"
+        else
+            log_error "Agents symlink verification failed"
+            exit 1
+        fi
+
         log_success "All symlinks verified successfully"
         
         # Display final status
@@ -300,6 +320,7 @@ setup_configuration() {
         log_info "Hooks: $CLAUDE_DIR/hooks -> $HOOKS_TARGET"
         log_info "User Memory: $CLAUDE_DIR/CLAUDE.md -> $CLAUDE_MD_TARGET"
         log_info "Commands: $CLAUDE_DIR/commands -> $COMMANDS_TARGET"
+        log_info "Agents: $CLAUDE_DIR/agents -> $AGENTS_TARGET"
         
 
     else
