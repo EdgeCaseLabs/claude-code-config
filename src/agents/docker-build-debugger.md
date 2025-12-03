@@ -74,3 +74,133 @@ When you complete your task:
 5. Note any additional considerations or follow-up recommendations
 
 Your goal is to get Docker builds working quickly and reliably, then return control to the main process with the issue resolved.
+
+## Quick Reference
+
+### Debug Loop
+1. **Observe**: `docker compose ps` | `docker compose ps | grep -E "Exit|Restarting"`
+2. **Investigate**: `docker compose logs --tail=100 servicename`
+3. **Diagnose**: Match error patterns to causes (see table below)
+4. **Debug inside**: Running container: `docker compose exec servicename /bin/bash`
+   Stopped container: `docker compose run --entrypoint /bin/bash servicename`
+5. **Fix**: Edit Dockerfile/docker-compose.yml
+6. **Rebuild**: `docker compose build --no-cache servicename`
+7. **Test**: `docker compose down && docker compose up servicename`
+
+### Error Pattern Reference
+
+| Error Pattern | Likely Cause | Investigation |
+|--------------|--------------|---------------|
+| `NU1301`, `NU1900` | NuGet auth failure | `printenv \| grep -E "NUGET\|TOKEN\|VSS"` |
+| `Permission denied` | File permissions | `ls -la /path/to/file` |
+| `Cannot find module` | Missing dependencies | `ls -la /app` |
+| `Connection refused` | Service not ready/wrong port | `docker compose ps` |
+| `Exit code 1` | Generic failure | `docker compose logs --tail=200` |
+| `OCI runtime create failed` | Startup issue | Check Dockerfile CMD/ENTRYPOINT |
+| `failed to compute cache key` | Build context/COPY path | Check file paths in Dockerfile |
+| `ENOSPC` | Disk full | `df -h`, `docker system prune` |
+
+### Common Fixes Reference
+
+| Problem | Solution |
+|---------|----------|
+| Service exits immediately | Check CMD/ENTRYPOINT, verify executable exists |
+| Permission denied | `chmod +x` before COPY or RUN chmod in Dockerfile |
+| Cannot connect to database | Check depends_on, connection string, network |
+| Environment variable not set | Check .env file and docker-compose.yml (see syntax below) |
+| Package not found | Rebuild with --no-cache, check package manager config |
+| Port already in use | Change port mapping in docker-compose.yml |
+| Out of memory | Increase Docker memory limits or optimize app |
+| SSL/TLS errors | Update certificates, check HTTPS settings |
+| Timezone issues | Set `TZ` environment variable |
+| Locale errors | Set `LANG` and `LC_ALL` environment variables |
+
+### Environment Variable Syntax (docker-compose.yml)
+```yaml
+services:
+  myservice:
+    environment:
+      MY_VAR: value              # Hardcoded value
+      MY_VAR: "${MY_VAR}"        # From .env with substitution
+      MY_VAR:                    # From .env without substitution (passthrough)
+    build:
+      args:
+        BUILD_ARG: "${BUILD_ARG}"  # Build-time arg from .env
+        BUILD_ARG:                  # Alternative passthrough syntax
+```
+
+### Investigation Commands by Category
+
+```bash
+# Error searching
+docker compose logs | grep -E "ERROR|error|Error|failed|Failed|Exception"
+docker compose logs servicename | grep -E "NU1301|NU1900|Permission denied|Cannot find"
+docker compose logs --since "10m" servicename
+
+# Container inspection
+docker compose exec servicename printenv | sort
+docker compose exec servicename cat /etc/os-release
+docker compose exec servicename df -h
+docker compose exec servicename ps aux
+
+# Network debugging
+docker compose exec servicename ping otherservice
+docker compose exec servicename netstat -tuln
+docker compose exec servicename curl http://otherservice:port/health
+
+# Filesystem checks
+docker compose exec servicename ls -la /app
+docker compose exec servicename find / -name "*.log" 2>/dev/null
+docker compose exec servicename cat /app/config.json
+
+# Process & resources
+docker compose top servicename
+docker stats servicename
+docker compose exec servicename free -h
+```
+
+### Testing with Service Dependencies
+```bash
+# Start dependencies first, wait, then start main service
+docker compose up -d dependency1 dependency2
+sleep 10  # Wait for services to be ready
+docker compose up servicename
+```
+
+### Essential Build/Run Commands
+```bash
+# Validate YAML before running
+docker compose config
+
+# Rebuild without cache
+docker compose build --no-cache servicename
+source .env && docker compose build --no-cache servicename  # For build args
+
+# Fresh start (keeps volumes)
+docker compose down && docker compose up servicename
+
+# Complete fresh start (removes volumes)
+docker compose down -v && docker compose up servicename
+
+# Nuclear option - clean everything
+docker compose down -v && docker system prune -a --volumes && docker compose build --no-cache && docker compose up
+```
+
+### Pro Tips
+- Tail logs in background: `docker compose logs -f servicename &`
+- Disable problematic service temporarily: `--scale servicename=0`
+- Validate YAML syntax: `docker compose config`
+- Create `docker-compose.debug.yml` with extra logging for troubleshooting
+- Keep working config backup before changes
+
+### Debug Checklist
+- [ ] Check exit code: `docker compose ps servicename`
+- [ ] Read logs: `docker compose logs --tail=100 servicename`
+- [ ] Search errors: `docker compose logs servicename | grep -i error`
+- [ ] Verify environment: `docker compose exec servicename printenv`
+- [ ] Check file permissions: `docker compose exec servicename ls -la /app`
+- [ ] Test dependencies: Can service reach databases/other services?
+- [ ] Verify config files: Are they present and valid?
+- [ ] Check resources: `docker stats` - enough memory/CPU?
+- [ ] Review Dockerfile: Correct base image? All files copied?
+- [ ] Test locally: Can you run the app outside Docker?
