@@ -124,23 +124,51 @@ execute_or_simulate() {
     fi
 }
 
+# Dependency check function
+check_dependencies() {
+    log_info "Checking required dependencies..."
+
+    local missing_deps=false
+
+    # Check for uv (required for Python hooks)
+    if command -v uv &> /dev/null; then
+        log_success "uv is installed: $(which uv)"
+        verbose_log "uv version: $(uv --version)"
+    else
+        log_error "uv is not installed (required for Python hooks)"
+        log_info "Install with one of the following methods:"
+        log_info "  • curl -LsSf https://astral.sh/uv/install.sh | sh"
+        log_info "  • brew install uv"
+        log_info "  • pip install uv"
+        missing_deps=true
+    fi
+
+    if [[ "$missing_deps" == true ]]; then
+        log_error "Please install missing dependencies before continuing"
+        return 1
+    fi
+
+    log_success "All dependencies are installed"
+    return 0
+}
+
 # Validation functions
 validate_targets() {
     if [[ ! -f "$SETTINGS_TARGET" ]]; then
         log_error "Settings file not found: $SETTINGS_TARGET"
         return 1
     fi
-    
+
     if [[ ! -d "$HOOKS_TARGET" ]]; then
         log_error "Hooks directory not found: $HOOKS_TARGET"
         return 1
     fi
-    
+
     if [[ ! -f "$CLAUDE_MD_TARGET" ]]; then
         log_error "CLAUDE.md file not found: $CLAUDE_MD_TARGET"
         return 1
     fi
-    
+
     if [[ ! -d "$COMMANDS_TARGET" ]]; then
         log_error "Commands directory not found: $COMMANDS_TARGET"
         return 1
@@ -248,7 +276,12 @@ remove_configuration() {
 # Main setup function
 setup_configuration() {
     log_info "Starting Claude Code configuration setup..."
-    
+
+    # Check dependencies
+    if ! check_dependencies; then
+        exit 1
+    fi
+
     # Validate targets exist
     if ! validate_targets; then
         exit 1
