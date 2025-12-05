@@ -13,6 +13,7 @@ HOOKS_TARGET="$SCRIPT_DIR/src/hooks"
 CLAUDE_MD_TARGET="$SCRIPT_DIR/src/CLAUDE.md"
 COMMANDS_TARGET="$SCRIPT_DIR/src/commands"
 AGENTS_TARGET="$SCRIPT_DIR/src/agents"
+SKILLS_TARGET="$SCRIPT_DIR/src/skills"
 
 
 # Colors for output
@@ -59,6 +60,7 @@ This script creates symlinks from ~/.claude/ to this repository's configuration 
 - ~/.claude/CLAUDE.md -> ./src/CLAUDE.md
 - ~/.claude/commands/ -> ./src/commands/
 - ~/.claude/agents/ -> ./src/agents/
+- ~/.claude/skills/ -> ./src/skills/
 
 Use --remove to uninstall (remove symlinks).
 Use --force to overwrite existing files/directories (WARNING: destructive).
@@ -179,6 +181,11 @@ validate_targets() {
         return 1
     fi
 
+    if [[ ! -d "$SKILLS_TARGET" ]]; then
+        log_error "Skills directory not found: $SKILLS_TARGET"
+        return 1
+    fi
+
     log_success "Configuration targets validated"
     return 0
 }
@@ -266,6 +273,9 @@ remove_configuration() {
     # Remove agents directory symlink
     remove_symlink "$CLAUDE_DIR/agents" "agents directory"
 
+    # Remove skills directory symlink
+    remove_symlink "$CLAUDE_DIR/skills" "skills directory"
+
     if [[ "$DRY_RUN" == false ]]; then
         log_success "Configuration symlinks removed successfully"
     else
@@ -304,6 +314,9 @@ setup_configuration() {
 
     # Create agents directory symlink
     create_symlink "$AGENTS_TARGET" "$CLAUDE_DIR/agents" "agents directory"
+
+    # Create skills directory symlink
+    create_symlink "$SKILLS_TARGET" "$CLAUDE_DIR/skills" "skills directory"
 
     # Verify symlinks
     if [[ "$DRY_RUN" == false ]]; then
@@ -344,6 +357,13 @@ setup_configuration() {
             exit 1
         fi
 
+        if [[ -L "$CLAUDE_DIR/skills" ]] && [[ -d "$CLAUDE_DIR/skills" ]]; then
+            log_success "Skills symlink is working correctly"
+        else
+            log_error "Skills symlink verification failed"
+            exit 1
+        fi
+
         log_success "All symlinks verified successfully"
         
         # Display final status
@@ -354,6 +374,7 @@ setup_configuration() {
         log_info "User Memory: $CLAUDE_DIR/CLAUDE.md -> $CLAUDE_MD_TARGET"
         log_info "Commands: $CLAUDE_DIR/commands -> $COMMANDS_TARGET"
         log_info "Agents: $CLAUDE_DIR/agents -> $AGENTS_TARGET"
+        log_info "Skills: $CLAUDE_DIR/skills -> $SKILLS_TARGET"
         
 
     else

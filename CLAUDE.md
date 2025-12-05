@@ -13,6 +13,7 @@ This repository manages centralized Claude Code configurations and hooks that ar
 - **Global User Memory**: `src/CLAUDE.md` provides user preferences that apply across all Claude Code sessions
 - **Custom Commands**: `src/commands/` contains slash command definitions shared globally
 - **Custom Agents**: `src/agents/` contains agent definitions for specialized tasks
+- **Custom Skills**: `src/skills/` contains skill definitions that Claude automatically discovers and uses
 - **Hook System**: Python-based hooks in `src/hooks/` handle various lifecycle events
 - **Setup Automation**: `setup.sh` script handles symlink creation with multiple modes and safety features
 
@@ -26,6 +27,7 @@ claude-code-config/
 │   ├── CLAUDE.md          # Global user preferences (symlinked to ~/.claude/CLAUDE.md)
 │   ├── commands/           # Custom slash commands
 │   ├── agents/             # Custom agent definitions
+│   ├── skills/             # Custom skill definitions (auto-discovered by Claude)
 │   └── hooks/              # Python hook implementations
 │       ├── pre_tool_use.py     # Pre-execution validation and safety checks
 │       ├── post_tool_use.py    # Post-execution processing
@@ -48,6 +50,7 @@ The setup workflow:
    - `~/.claude/CLAUDE.md` → `./src/CLAUDE.md`
    - `~/.claude/commands/` → `./src/commands/`
    - `~/.claude/agents/` → `./src/agents/`
+   - `~/.claude/skills/` → `./src/skills/`
 2. Optional flags:
    - `--dry-run`: Preview changes without executing
    - `--force`: Overwrite existing symlinks
@@ -71,7 +74,8 @@ This is a configuration management repository. When working here:
 - Test configuration changes carefully as they apply globally
 - The setup script is idempotent and handles existing symlinks gracefully
 - Hook modifications take effect immediately for all Claude Code sessions
-- New commands in `src/commands/` and agents in `src/agents/` are available globally after setup
+- New commands in `src/commands/`, agents in `src/agents/`, and skills in `src/skills/` are available globally after setup
+- Skills are automatically discovered and activated by Claude based on context
 - Logs in the `logs/` directory track hook execution for debugging
 
 ## Safety Features
