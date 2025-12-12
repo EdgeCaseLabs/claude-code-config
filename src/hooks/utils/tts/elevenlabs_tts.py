@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.8"
 # dependencies = [
-#     "elevenlabs",
+#     "elevenlabs~=2.26",
 #     "python-dotenv",
 # ]
 # ///
@@ -51,7 +51,7 @@ def main():
     
     try:
         from elevenlabs.client import ElevenLabs
-        from elevenlabs import play
+        from elevenlabs.play import play
         
         # Initialize client
         elevenlabs = ElevenLabs(api_key=api_key)
