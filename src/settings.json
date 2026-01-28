@@ -15,7 +15,13 @@
       "Bash(touch:*)",
       "Bash(rm -f ~/.claude/hooks/.quiet)",
       "Bash(touch ~/.claude/hooks/.quiet)",
-      "Edit(~/.claude/hooks/.quiet)"
+      "Edit(~/.claude/hooks/.quiet)",
+      "Bash(rm -f ~/.claude/hooks/.quiet-subagent)",
+      "Bash(touch ~/.claude/hooks/.quiet-subagent)",
+      "Edit(~/.claude/hooks/.quiet-subagent)",
+      "Bash(rm -f ~/.claude/hooks/.allow-env)",
+      "Bash(touch ~/.claude/hooks/.allow-env)",
+      "Edit(~/.claude/hooks/.allow-env)"
     ],
     "deny": []
   },

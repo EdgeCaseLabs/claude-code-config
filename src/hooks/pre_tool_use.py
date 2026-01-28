@@ -56,6 +56,17 @@ def is_dangerous_rm_command(command):
     return False
 
 
+def is_env_security_enabled():
+    """
+    Check if .env security is enabled by checking for the .allow-env flag file.
+
+    Returns:
+        bool: True if .env security is enabled (flag file does NOT exist), False otherwise
+    """
+    allow_env_file = os.path.expanduser('~/.claude/hooks/.allow-env')
+    return not os.path.exists(allow_env_file)
+
+
 def is_env_file_access(tool_name, tool_input):
     """
     Check if any tool is trying to access .env files containing sensitive data.
@@ -98,12 +109,14 @@ def main():
         tool_input = input_data.get("tool_input", {})
 
         # Check for .env file access (blocks access to sensitive environment files)
-        if is_env_file_access(tool_name, tool_input):
+        # Only enforce if .env security is enabled
+        if is_env_security_enabled() and is_env_file_access(tool_name, tool_input):
             print(
                 "BLOCKED: Access to .env files containing sensitive data is prohibited",
                 file=sys.stderr,
             )
             print("Use .env.sample for template files instead", file=sys.stderr)
+            print("Or use /feature:disable-env-security to disable this protection", file=sys.stderr)
             sys.exit(2)  # Exit code 2 blocks tool call and shows error to Claude
 
         # Check for dangerous rm -rf commands

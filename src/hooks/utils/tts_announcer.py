@@ -133,6 +133,17 @@ def is_quiet_mode():
     return os.path.exists(quiet_file)
 
 
+def is_subagent_quiet_mode():
+    """
+    Check if subagent quiet mode is enabled by looking for the .quiet-subagent file.
+
+    Returns:
+        bool: True if subagent quiet mode is enabled, False otherwise
+    """
+    quiet_subagent_file = os.path.expanduser('~/.claude/hooks/.quiet-subagent')
+    return os.path.exists(quiet_subagent_file)
+
+
 def announce(message_type="custom", custom_message=None, use_llm=False, include_name=False):
     """
     Unified TTS announcement function.
@@ -149,6 +160,10 @@ def announce(message_type="custom", custom_message=None, use_llm=False, include_
         # Check if quiet mode is enabled
         if is_quiet_mode():
             return  # Skip TTS when quiet mode is active
+
+        # Check if subagent quiet mode is enabled for subagent announcements
+        if message_type == "subagent" and is_subagent_quiet_mode():
+            return  # Skip TTS for subagent when subagent quiet mode is active
 
         tts_script = get_tts_script_path()
         if not tts_script:
