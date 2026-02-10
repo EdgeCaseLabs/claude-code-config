@@ -26,6 +26,34 @@ This file contains global user preferences that apply to all Claude Code session
 - Run linting and type checking when available
 - Don't commit and push right away. I want to review things first.
 
+## Git Worktree Workflow
+
+This user prefers git worktrees for feature branch development.
+
+### Preferences
+
+- Always use worktrees when creating features in projects that support it
+- Set `SPECKIT_USE_WORKTREES=true` in shell (see ~/.zshrc)
+- Use `/git-worktree` skill for manually creating worktrees for existing branches
+
+### Directory Structure
+
+Feature branches are created as sibling directories to the main worktree:
+
+```
+~/<project>/
+├── main/                          # Main worktree
+├── JIRA-123-feature-name/        # Feature worktree
+└── JIRA-456-another-feature/     # Another feature worktree
+```
+
+### Benefits
+
+- Work on multiple features simultaneously without context switching
+- Each worktree has its own working directory and checked-out branch
+- Main branch always clean and ready for quick fixes
+- Shared .git directory means fetch/push operations are synchronized
+
 ## Tool Usage
 
 - Prefer Grep/Glob over manual file navigation
