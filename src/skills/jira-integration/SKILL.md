@@ -74,6 +74,27 @@ acli jira workitem assign KEY-123 --assignee "@me"
 
 # Transition work item
 acli jira workitem transition KEY-123 --state "In Progress"
+
+# Delete work item
+acli jira workitem delete KEY-123
+
+# Clone work item
+acli jira workitem clone KEY-123
+
+# Bulk create issues
+acli jira workitem create-bulk --from-csv items.csv
+
+# Archive / unarchive
+acli jira workitem archive KEY-123
+acli jira workitem unarchive KEY-123
+```
+
+**Comments, links, attachments, and watchers:**
+```bash
+acli jira workitem comment KEY-123 --add "Comment text"
+acli jira workitem link KEY-123 --target KEY-456 --type "blocks"
+acli jira workitem attachment KEY-123 --add file.txt
+acli jira workitem watcher KEY-123 --add "user@example.com"
 ```
 
 ### 2. Project Management
@@ -93,6 +114,15 @@ acli jira project list --limit 10
 **View project details:**
 ```bash
 acli jira project view PROJ
+```
+
+**Create, update, and manage projects:**
+```bash
+acli jira project create --key NEWPROJ --name "New Project"
+acli jira project update PROJ --name "Updated Name"
+acli jira project delete PROJ
+acli jira project archive PROJ
+acli jira project restore PROJ
 ```
 
 ### 3. Board and Sprint Management
@@ -130,6 +160,14 @@ acli jira sprint list-workitems --sprint 456 --board 123 --jql "assignee = curre
 
 # Output as JSON
 acli jira sprint list-workitems --sprint 456 --board 123 --json
+```
+
+### 4. Filters, Fields, and Dashboards
+
+```bash
+acli jira filter list
+acli jira field list
+acli jira dashboard list
 ```
 
 ## Limitations
