@@ -84,6 +84,10 @@
       }
     ]
   },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "claude-mem@thedotmack": true
+  },
   "alwaysThinkingEnabled": true,
   "feedbackSurveyState": {
     "lastShownTime": 1753999993659

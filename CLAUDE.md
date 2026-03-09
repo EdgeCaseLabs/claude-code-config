@@ -78,6 +78,14 @@ This is a configuration management repository. When working here:
 - Skills are automatically discovered and activated by Claude based on context
 - Logs in the `logs/` directory track hook execution for debugging
 
+## Plugins
+
+Plugins are managed separately by the Claude Code plugin system (not symlinked from this repo). After running `setup.sh`, install recommended plugins manually:
+
+```bash
+claude plugin install frontend-design@claude-plugins-official
+```
+
 ## Safety Features
 
 - Pre-tool-use hook includes dangerous command detection
