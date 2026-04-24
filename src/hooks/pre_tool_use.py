@@ -20,13 +20,14 @@ def is_dangerous_rm_command(command):
     normalized = " ".join(command.lower().split())
 
     # Pattern 1: Standard rm -rf variations
+    # Use (?<!-) lookbehind to avoid matching --rm (e.g. docker run --rm)
     patterns = [
-        r"\brm\s+.*-[a-z]*r[a-z]*f",  # rm -rf, rm -fr, rm -Rf, etc.
-        r"\brm\s+.*-[a-z]*f[a-z]*r",  # rm -fr variations
-        r"\brm\s+--recursive\s+--force",  # rm --recursive --force
-        r"\brm\s+--force\s+--recursive",  # rm --force --recursive
-        r"\brm\s+-r\s+.*-f",  # rm -r ... -f
-        r"\brm\s+-f\s+.*-r",  # rm -f ... -r
+        r"(?<!-)(?<!\w)\brm\s+.*-[a-z]*r[a-z]*f",  # rm -rf, rm -fr, rm -Rf, etc.
+        r"(?<!-)(?<!\w)\brm\s+.*-[a-z]*f[a-z]*r",  # rm -fr variations
+        r"(?<!-)(?<!\w)\brm\s+--recursive\s+--force",  # rm --recursive --force
+        r"(?<!-)(?<!\w)\brm\s+--force\s+--recursive",  # rm --force --recursive
+        r"(?<!-)(?<!\w)\brm\s+-r\s+.*-f",  # rm -r ... -f
+        r"(?<!-)(?<!\w)\brm\s+-f\s+.*-r",  # rm -f ... -r
         r"\bdocker\s+system\s+prune",  # docker system prune
     ]
 
@@ -48,7 +49,7 @@ def is_dangerous_rm_command(command):
         r"\.\s*$",  # Current directory at end of command
     ]
 
-    if re.search(r"\brm\s+.*-[a-z]*r", normalized):  # If rm has recursive flag
+    if re.search(r"(?<!-)(?<!\w)\brm\s+.*-[a-z]*r", normalized):  # If rm has recursive flag
         for path in dangerous_paths:
             if re.search(path, normalized):
                 return True
