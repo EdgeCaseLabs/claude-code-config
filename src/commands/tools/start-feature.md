@@ -107,7 +107,7 @@ CLAUDE_SURFACE=$(cmux list-pane-surfaces --workspace "$WORKSPACE_UUID" | grep -o
 sleep 5  # Give Claude time to start up before sending
 cmux send --workspace "$WORKSPACE_UUID" --surface "$CLAUDE_SURFACE" "/rename $BRANCH"$'\n'
 sleep 1
-cmux send --workspace "$WORKSPACE_UUID" --surface "$CLAUDE_SURFACE" "❯ /speckit.specify Read $TICKET and let's plan it out. You are in worktree $WORKTREE_DIR. All your reading and changes should go there unless otherwise directed."
+cmux send --workspace "$WORKSPACE_UUID" --surface "$CLAUDE_SURFACE" "/speckit.specify Read $TICKET and let's plan it out. Work back and forth with me, starting with your open questions and outline before writing the plan. You are in worktree $WORKTREE_DIR. All your reading and changes should go there unless otherwise directed."
 
 echo ""
 echo "Feature environment ready!"
