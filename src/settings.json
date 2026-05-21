@@ -1,4 +1,8 @@
 {
+  "env": {
+    "MCP_TOOL_TIMEOUT": "300000",
+    "MCP_TIMEOUT": "30000"
+  },
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
@@ -87,7 +91,7 @@
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
     "claude-mem@thedotmack": true,
-    "everything-claude-code@everything-claude-code": true,
+    "codex@openai-codex": true,
     "caveman@caveman": true
   },
   "extraKnownMarketplaces": {
@@ -95,6 +99,12 @@
       "source": {
         "source": "github",
         "repo": "affaan-m/everything-claude-code"
+      }
+    },
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
       }
     },
     "caveman": {
@@ -106,6 +116,8 @@
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",
+  "skipDangerousModePermissionPrompt": true,
+  "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "feedbackSurveyState": {
     "lastShownTime": 1753999993659
