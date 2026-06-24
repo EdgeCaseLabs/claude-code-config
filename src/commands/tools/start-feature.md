@@ -93,6 +93,8 @@ for f in .env .env.test; do
   [ -f "$MAIN_DIR/$f" ] && cp "$MAIN_DIR/$f" "$WORKTREE_DIR/$f" && echo "  Copied $f"
 done
 [ -f "$MAIN_DIR/supabase/functions/.env" ] && cp "$MAIN_DIR/supabase/functions/.env" "$WORKTREE_DIR/supabase/functions/.env" && echo "  Copied supabase/functions/.env"
+[ -f "$MAIN_DIR/scripts/.env" ] && cp "$MAIN_DIR/scripts/.env" "$WORKTREE_DIR/scripts/.env" && echo "  Copied scripts/.env"
+[ -f "$MAIN_DIR/azure-functions/.env" ] && cp "$MAIN_DIR/azure-functions/.env" "$WORKTREE_DIR/azure-functions/.env" && echo "  Copied azure-functions/.env"
 mkdir -p "$WORKTREE_DIR/.claude"
 [ -f "$MAIN_DIR/.claude/settings.local.json" ] && cp "$MAIN_DIR/.claude/settings.local.json" "$WORKTREE_DIR/.claude/settings.local.json" && echo "  Copied .claude/settings.local.json"
 
@@ -106,7 +108,7 @@ cmux send --workspace "$WORKSPACE_UUID" --surface "$SURFACE_REF" "cd $WORKTREE_D
 CLAUDE_SURFACE=$(cmux list-pane-surfaces --workspace "$WORKSPACE_UUID" | grep -oE 'surface:[0-9]+' | head -1)
 sleep 5  # Give Claude time to start up before sending
 cmux send --workspace "$WORKSPACE_UUID" --surface "$CLAUDE_SURFACE" "/rename $BRANCH"$'\n'
-sleep 1
+sleep 5
 cmux send --workspace "$WORKSPACE_UUID" --surface "$CLAUDE_SURFACE" "/speckit.specify Read $TICKET and let's plan it out. Work back and forth with me, starting with your open questions and outline before writing the plan. You are in worktree $WORKTREE_DIR. All your reading and changes should go there unless otherwise directed."
 
 echo ""
