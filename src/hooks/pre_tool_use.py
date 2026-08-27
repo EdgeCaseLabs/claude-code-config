@@ -19,6 +19,17 @@ def is_dangerous_rm_command(command):
     # Normalize command by removing extra spaces and converting to lowercase
     normalized = " ".join(command.lower().split())
 
+    # Exception: `sbx rm` / `sbx template rm` remove Docker Sandboxes and template images, not
+    # files. Sandbox names like "sbx-probe" read as a recursive flag to the heuristics below
+    # (`rm` followed by a `-...r` token), so these commands were being blocked outright.
+    # The exemption only applies when EVERY `rm` in the command line is an sbx subcommand, so a
+    # filesystem delete hidden in the same line (`sbx rm x && rm -rf ...`) still gets caught.
+    rm_positions = [m.start() for m in re.finditer(r"(?<!-)(?<!\w)\brm\b", normalized)]
+    if rm_positions and all(
+        re.search(r"\bsbx\s+(template\s+)?$", normalized[:pos]) for pos in rm_positions
+    ):
+        return False
+
     # Pattern 1: Standard rm -rf variations
     # Use (?<!-) lookbehind to avoid matching --rm (e.g. docker run --rm)
     patterns = [
