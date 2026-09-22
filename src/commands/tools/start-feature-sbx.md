@@ -1,5 +1,5 @@
 ---
-description: "Start a feature in a Docker Sandbox: fetch a Jira/Mira ticket, create a git worktree, create + bootstrap an sbx sandbox, and open a cmux workspace"
+description: "Start a feature in a Docker Sandbox: fetch a Jira/Mira ticket, create a git worktree, create + bootstrap an sbx sandbox, and open a herdr workspace"
 argument-hint: "<TICKET> — Jira (e.g. TEX-448) or Mira (e.g. TEXOMA-273)"
 ---
 
@@ -34,7 +34,8 @@ Flags:
 |---|---|
 | `--tier full` | install every tool in the mise config (minus `npm:git-split-diffs`, `azure-cli`, which cannot build in-container) |
 | `--resync` | reuse an existing sandbox: re-push config, re-run bootstrap. Use after editing anything in `~/.claude` |
-| `--no-cmux` | skip the cmux workspace (testing) |
+| `--prompt-command <CMD>` | slash command the opening prompt is sent as (default `/speckit.specify`) |
+| `--no-herdr` | skip the herdr workspace (testing); `--no-cmux` still works as an alias |
 
 Not flags: **Supabase** is never started for you — open pane 2 (or `tex sbx shell`) and run
 `supabase start` in there, against the sandbox's own docker daemon. The **template** image is
@@ -51,8 +52,13 @@ worktree and `sbx-main` for the main one — mounts are fixed at creation, so th
 has to be the directory, not the branch checked out in it) → filters host-only hooks out of
 `settings.json` → pushes config → runs the repo's `scripts/sbx/sbx-bootstrap.sh` inside, which
 finishes by calling the personal `~/code/dotfiles/sbx-personal-bootstrap.sh` from the read-only
-dotfiles mount → opens a cmux workspace `<BRANCH>-sbx` with pane 1 on the sandboxed agent and
-pane 2 an **in-sandbox** shell in the worktree → prints a summary.
+dotfiles mount → opens a herdr workspace `<BRANCH>-sbx` with pane 1 on the sandboxed agent and
+pane 2 an **in-sandbox** shell in the worktree → waits for herdr to recognize the agent, names it
+after the branch, and sends the opening prompt through `herdr agent prompt` → prints a summary.
+
+**Run it from a herdr pane.** herdr control commands reach the server over the caller's inherited
+`HERDR_SOCKET_PATH`, so from a bare terminal there is no session to create the workspace in — the
+driver detects this (`HERDR_ENV != 1`), warns, and finishes without the workspace.
 
 Everything sandbox-side goes through the repo's `tex` CLI (`tex sbx up`, `tex sbx claude`,
 `tex sbx name`), invoked by absolute path from the worktree so it does not depend on PATH.
@@ -108,7 +114,8 @@ Transcripts live on sandbox-managed volumes, so `tex sbx clean` destroys them �
   worktree's `.git` is only a pointer file into it; recreate the sandbox with that mount.
 - Bootstrap failure → the driver stops and prints `sbx exec -it <sandbox> bash` to debug in place.
   Fix, then re-run with `--resync`.
-- `cmux` not running → the driver warns and finishes; attach manually with the printed command.
+- `herdr` missing, or not invoked from a herdr pane → the driver warns and finishes; start the
+  agent manually with `cd <worktree> && tex sbx claude`.
 - `repo sandbox tooling not found (expected scripts/tex)` → the worktree predates the `tex` CLI.
   Rebase it, or point `--main-dir` at a checkout that has it.
 - Ticket-tracker failures (transition rejected, MCP error) → report and continue; a tracker hiccup
