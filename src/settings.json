@@ -32,6 +32,17 @@
     "deny": []
   },
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/jev_router.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "",
@@ -116,6 +127,9 @@
   "alwaysThinkingEnabled": true,
   "effortLevel": "medium",
   "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
+  "editorMode": "normal",
+  "autoCompactEnabled": false,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "feedbackSurveyState": {

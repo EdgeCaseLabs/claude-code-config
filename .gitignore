@@ -12,3 +12,4 @@ dist/
 src/hooks/.quiet
 src/hooks/.quiet-subagent
 src/hooks/.allow-env
+src/skills/synced/
