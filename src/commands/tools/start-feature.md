@@ -1,15 +1,15 @@
 ---
-description: "Start a new feature: fetch a Jira or Mira ticket, create a git worktree, and open a cmux workspace"
+description: "Start a new feature: fetch a Jira or Mira ticket, create a git worktree, and open a herdr workspace"
 argument-hint: "<TICKET> — Jira (e.g. TEX-448) or Mira (e.g. TEXOMA-273)"
 ---
 
 # Start Feature Workflow
 
-Set up a full development environment for a ticket: git worktree + cmux workspace.
+Set up a full development environment for a ticket: git worktree + herdr workspace.
 
 > **Sandboxed variant:** [`/tools:start-feature-sbx`](./start-feature-sbx.md) runs the agent inside a
 > Docker Sandbox (`sbx`) instead of on the host — one sandbox per branch, its own docker daemon and
-> Supabase stack, host services unreachable. Steps 1–4 below are shared; it swaps the cmux tail for
+> Supabase stack, host services unreachable. Steps 1–4 below are shared; it swaps the host herdr tail for
 > `sbx create` + bootstrap. Use this file for host-side work, that one for isolation.
 
 ## Tracker Detection
@@ -21,7 +21,7 @@ Two trackers are supported. Pick one from the ticket key prefix:
 | `TEXOMA-<n>` | **Mira** | `mcp__plugin_mira_mira__mira_get_card` |
 | anything else (e.g. `TEX-<n>`) | **Jira** | `acli jira workitem view` |
 
-Everything after Step 2 is tracker-agnostic — the branch name, worktree, and cmux setup use the
+Everything after Step 2 is tracker-agnostic — the branch name, worktree, and herdr setup use the
 ticket key and summary the same way regardless of source.
 
 **Key approach:** All logic is written to a single shell script file first, then executed with one
@@ -188,15 +188,6 @@ else
   git -C "$MAIN_DIR" worktree add -b "$BRANCH" "$WORKTREE_DIR"
 fi
 
-# Create cmux workspace (pane 1: claude --verbose in main worktree)
-# new-workspace returns "OK workspace:N" — resolve to stable UUID via list-workspaces
-echo "Creating cmux workspace..."
-WORKSPACE_REF=$(cmux new-workspace --cwd "$MAIN_DIR" --command "claude --verbose --name $BRANCH" | awk '{print $NF}')
-WORKSPACE_UUID=$(cmux --id-format both list-workspaces | grep "^[* ]*${WORKSPACE_REF} " | grep -oiE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}')
-cmux rename-workspace --workspace "$WORKSPACE_UUID" "$BRANCH"
-LAST_INDEX=$(cmux list-workspaces | wc -l | tr -d ' ')
-cmux reorder-workspace --workspace "$WORKSPACE_UUID" --index "$LAST_INDEX"
-
 # Copy env files and local settings from main worktree
 echo "Copying env files and local settings..."
 for f in .env .env.test; do
@@ -208,25 +199,65 @@ done
 mkdir -p "$WORKTREE_DIR/.claude"
 [ -f "$MAIN_DIR/.claude/settings.local.json" ] && cp "$MAIN_DIR/.claude/settings.local.json" "$WORKTREE_DIR/.claude/settings.local.json" && echo "  Copied .claude/settings.local.json"
 
-# Add pane 2: terminal in feature worktree
-PANE_REF=$(cmux new-pane --direction right --workspace "$WORKSPACE_UUID" | grep -oE 'pane:[0-9]+' | tail -1)
-SURFACE_REF=$(cmux list-pane-surfaces --workspace "$WORKSPACE_UUID" --pane "$PANE_REF" | grep -oE 'surface:[0-9]+' | tail -1)
-cmux send --workspace "$WORKSPACE_UUID" --surface "$SURFACE_REF" "cd $WORKTREE_DIR"$'\n'
+# herdr control commands find the server through HERDR_SOCKET_PATH, which only herdr panes inherit.
+# Fall back to the default server socket so this also works from Claude background jobs and plain
+# terminals (cmux refused callers it hadn't started, which is why this moved to herdr).
+export HERDR_SOCKET_PATH="${HERDR_SOCKET_PATH:-$HOME/.config/herdr/herdr.sock}"
+if ! command -v herdr >/dev/null 2>&1; then
+  echo "herdr not found — skipping workspace. Start the agent with: cd $MAIN_DIR && claude --name $BRANCH"
+  exit 0
+fi
+if [ ! -S "$HERDR_SOCKET_PATH" ]; then
+  echo "herdr server not running (no socket at $HERDR_SOCKET_PATH) — open herdr, then re-run this script"
+  exit 0
+fi
 
-# Send rename + initial context to Claude pane (pane 1)
-# List all surfaces in the workspace, grab the first one (Claude's pane)
-CLAUDE_SURFACE=$(cmux list-pane-surfaces --workspace "$WORKSPACE_UUID" | grep -oE 'surface:[0-9]+' | head -1)
-sleep 5  # Give Claude time to start up before sending
-cmux send --workspace "$WORKSPACE_UUID" --surface "$CLAUDE_SURFACE" "/rename $BRANCH"$'\n'
-sleep 5
-cmux send --workspace "$WORKSPACE_UUID" --surface "$CLAUDE_SURFACE" "/speckit.specify Read $TICKET $TRACKER_HINT and let's plan it out. Work back and forth with me, starting with your open questions and outline before writing the plan. You are in worktree $WORKTREE_DIR. All your reading and changes should go there unless otherwise directed."
+# herdr returns JSON; read every id out of the response rather than guessing it
+jget() { python3 -c 'import json, sys
+d = json.load(sys.stdin)
+for k in sys.argv[1].split("."): d = d[k]
+print(d)' "$1"; }
+
+# `pane run` types into the pty without waiting for a prompt, and a fresh pane's login shell
+# (mise + starship + atuin) drops early keystrokes. Echo a split marker and wait for the joined
+# form to come back — only the shell can produce it, so a match proves the shell is reading.
+pane_wait_ready() {
+  marker="ready_$$_${RANDOM:-0}"
+  for _ in $(seq 1 20); do
+    herdr pane run "$1" "printf '%s\n' \"RE\"\"ADY_$marker\"" >/dev/null 2>&1 || true
+    herdr pane wait-output "$1" --match "READY_$marker" --source recent-unwrapped --timeout 3000 >/dev/null 2>&1 && return 0
+  done
+  return 1
+}
+
+# Workspace: pane 1 = claude in the main worktree, pane 2 = shell in the feature worktree
+echo "Creating herdr workspace..."
+WS_JSON=$(herdr workspace create --cwd "$MAIN_DIR" --label "$BRANCH" --no-focus)
+WORKSPACE_ID=$(printf '%s' "$WS_JSON" | jget result.workspace.workspace_id)
+AGENT_PANE=$(printf '%s' "$WS_JSON" | jget result.root_pane.pane_id)
+SPLIT_JSON=$(herdr pane split "$AGENT_PANE" --direction right --cwd "$WORKTREE_DIR" --no-focus)
+SHELL_PANE=$(printf '%s' "$SPLIT_JSON" | jget result.pane.pane_id)
+herdr pane rename "$AGENT_PANE" "$BRANCH" >/dev/null 2>&1 || true
+herdr pane rename "$SHELL_PANE" "shell" >/dev/null 2>&1 || true
+
+pane_wait_ready "$AGENT_PANE" || echo "  [warn] agent pane never signalled ready — its command may be mangled"
+herdr pane run "$AGENT_PANE" "claude --verbose --name $BRANCH" >/dev/null
+
+# The footer renders once the TUI accepts input; wait for it, then send the opening prompt
+if herdr pane wait-output "$AGENT_PANE" --regex 'shift\+tab to cycle' --source recent-unwrapped --timeout 120000 >/dev/null 2>&1; then
+  sleep 3  # the footer paints a beat before the input box takes keys
+  herdr pane run "$AGENT_PANE" "/speckit.specify Read $TICKET $TRACKER_HINT and let's plan it out. Work back and forth with me, starting with your open questions and outline before writing the plan. You are in worktree $WORKTREE_DIR. All your reading and changes should go there unless otherwise directed." >/dev/null
+else
+  echo "  [warn] claude did not reach its prompt within 2m — send the opening prompt by hand in pane $AGENT_PANE"
+fi
+herdr workspace focus "$WORKSPACE_ID" >/dev/null 2>&1 || true
 
 echo ""
 echo "Feature environment ready!"
 echo "  Ticket:   $TICKET"
 echo "  Branch:   $BRANCH"
 echo "  Worktree: $WORKTREE_DIR"
-echo "  cmux:     workspace \"$BRANCH\" (pane 1: claude --verbose --name $BRANCH, pane 2: terminal)"
+echo "  herdr:    workspace \"$BRANCH\" (pane 1: claude --verbose --name $BRANCH, pane 2: shell in worktree)"
 ```
 
 For the `MAIN_DIR`, use the **first line** of `git worktree list` output (the main worktree path).
@@ -255,8 +286,11 @@ Report the script output to the user, plus one line on what Step 4 did to the ti
 - If the Mira MCP server is unavailable or `mira_get_card` returns no such card (`TEXOMA-*` tickets):
   stop and report it. Do not silently fall through to Jira — the key spaces are distinct.
 - If not inside a git repo: `Must be run from inside a git repository`
-- If the worktree directory already exists: warn and skip worktree creation (cmux setup still runs)
-- If `cmux` is not running: `cmux is not running — open cmux first`
+- If the worktree directory already exists: warn and skip worktree creation (env copy + herdr setup still run)
+- If `herdr` is missing or its server is not running: the script copies env files, prints what to do,
+  and exits cleanly — open herdr and re-run it
+- The script runs from a herdr pane, a plain terminal, or a Claude background job alike: it falls back
+  to the default server socket (`~/.config/herdr/herdr.sock`) when `HERDR_SOCKET_PATH` isn't inherited
 - If multiple branches match the ticket: **stop and ask the user** which branch to use before continuing
 - If the Step 4 claim fails (transition rejected, assign denied, MCP error): report it and **continue**
-  with the worktree + cmux setup. A ticket-tracker hiccup should not block the dev environment.
+  with the worktree + herdr setup. A ticket-tracker hiccup should not block the dev environment.
